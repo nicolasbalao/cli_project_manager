@@ -1,3 +1,5 @@
+use std::path;
+
 use clap::{command, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
@@ -10,7 +12,7 @@ struct Cli {
 #[derive(Subcommand, Debug)]
 enum Commands {
     Add {
-        path: String,
+        path: path::PathBuf,
 
         #[arg(short, long)]
         name: Option<String>,
@@ -22,7 +24,7 @@ fn main() {
 
     match &cli.command {
         Commands::Add { path, name } => {
-            println!("Adding project with path: {path}");
+            println!("Adding project with path: {path:?}");
 
             if let Some(project_name) = name {
                 println!("Project name: {project_name}")
