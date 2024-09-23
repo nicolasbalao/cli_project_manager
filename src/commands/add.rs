@@ -9,7 +9,7 @@ pub fn execute(path: &path::PathBuf, project_name: &Option<String>) {
     let project_meta_data = match ProjectMetaData::new(path, project_name.clone()) {
         Ok(meta) => meta,
         Err(e) => {
-            eprint!("Error creating project metadat: {:?}", e);
+            eprintln!("Error creating project metadata: {:?}", e);
             return;
         }
     };
