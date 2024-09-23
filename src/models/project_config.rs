@@ -4,6 +4,7 @@ use std::{
     path::{self},
 };
 
+use anyhow::{Context, Ok};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
@@ -18,24 +19,28 @@ impl ProjectConfig {
     }
 
     // TODO Add error handling
-    pub fn save(&self) {
-        let toml_str = toml::to_string(&self).unwrap();
-        let config_file_path = dirs::home_dir().unwrap().join(format!(
-            ".project_manager_cli/projects/{}.toml",
-            self.meta_data.name
-        ));
+    pub fn save(&self) -> Result<(), anyhow::Error> {
+        let toml_str = toml::to_string(&self).context("Failed to serialize project config")?;
+        let config_file_path = dirs::home_dir()
+            .context("Failed to get home directory")?
+            .join(format!(
+                ".project_manager_cli/projects/{}.toml",
+                self.meta_data.name
+            ));
 
         let mut config_file =
-            fs::File::create(config_file_path).expect("Trouble to create project config file");
+            fs::File::create(config_file_path).context("Failed creating  project config file")?;
 
         config_file
             .write_all(&toml_str.as_bytes())
-            .expect("Failed to write the config file");
+            .context("Failed to write the config file")?;
 
         println!(
             "Project config file created at : ~/.project_manager_cli/projects/{}.toml",
             self.meta_data.name
         );
+
+        Ok(())
     }
 }
 
@@ -47,9 +52,9 @@ pub struct ProjectMetaData {
 }
 
 impl ProjectMetaData {
-    pub fn new(path: &path::PathBuf, project_name: Option<String>) -> Self {
-        let path = path.canonicalize().unwrap();
-        let canonical_path = path.canonicalize().unwrap().to_string_lossy().to_string();
+    pub fn new(path: &path::PathBuf, project_name: Option<String>) -> Result<Self, anyhow::Error> {
+        let path = path.canonicalize().context("Failed to canonicalize path")?;
+        let canonical_path = path.to_string_lossy().to_string();
         let name = project_name.unwrap_or_else(|| {
             path.file_name()
                 .unwrap()
@@ -58,10 +63,10 @@ impl ProjectMetaData {
                 .to_string()
         });
 
-        ProjectMetaData {
+        Ok(ProjectMetaData {
             name,
             path: canonical_path,
             creation_date_utc: Utc::now().to_string(),
-        }
+        })
     }
 }

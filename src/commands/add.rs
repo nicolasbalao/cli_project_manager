@@ -6,7 +6,13 @@ use crate::models::{
 };
 
 pub fn execute(path: &path::PathBuf, project_name: &Option<String>) {
-    let project_meta_data = ProjectMetaData::new(path, project_name.clone());
+    let project_meta_data = match ProjectMetaData::new(path, project_name.clone()) {
+        Ok(meta) => meta,
+        Err(e) => {
+            eprint!("Error creating project metadat: {:?}", e);
+            return;
+        }
+    };
 
     let project_config = ProjectConfig::new(project_meta_data);
 
@@ -20,8 +26,12 @@ pub fn execute(path: &path::PathBuf, project_name: &Option<String>) {
         std::process::exit(0);
     }
 
-    project_config.save();
-    project_index
-        .add_project_and_save(project_config.meta_data)
-        .expect("Can't add project");
+    if let Err(e) = project_config.save() {
+        eprintln!("Error saving project config: {:?}", e);
+        return;
+    };
+    if let Err(e) = project_index.add_project_and_save(project_config.meta_data) {
+        eprintln!("Error adding project to index: {:?}", e);
+        return;
+    }
 }

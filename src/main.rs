@@ -24,7 +24,10 @@ enum Commands {
 }
 
 fn main() {
-    config::setup_environment().expect("Failed to setup the environment");
+    if let Err(e) = config::setup_environment() {
+        eprintln!("Failed to setup the environment: {:?}", e);
+        return;
+    };
 
     let cli = Cli::parse();
 
