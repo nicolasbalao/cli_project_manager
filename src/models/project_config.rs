@@ -70,3 +70,64 @@ impl ProjectMetaData {
         })
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+
+    #[test]
+    fn create_project_meta_data() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let project_path = temp_dir.into_path();
+
+        let project_meta_data =
+            ProjectMetaData::new(&project_path, Some("project_name".to_string())).unwrap();
+
+        assert_eq!(project_meta_data.name, "project_name");
+        assert_eq!(
+            project_meta_data.path,
+            project_path
+                .canonicalize()
+                .unwrap()
+                .to_string_lossy()
+                .to_string()
+        );
+    }
+
+    #[test]
+    fn create_project_meta_data_without_name() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let project_path = temp_dir.into_path();
+        let project_name = project_path
+            .into_iter()
+            .last()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+
+        let project_meta_data = ProjectMetaData::new(&project_path, None).unwrap();
+
+        assert_eq!(project_meta_data.name, project_name);
+        assert_eq!(
+            project_meta_data.path,
+            project_path
+                .canonicalize()
+                .unwrap()
+                .to_string_lossy()
+                .to_string()
+        );
+    }
+
+    #[test]
+    fn create_project_meta_data_with_invalide_path() {
+        let invalide_path =
+            path::PathBuf::new().join("/tmp/jflsdjflksdjflkjslfjlsdfbdshjkgvbnjkhcvfh");
+
+        let _ = ProjectMetaData::new(&invalide_path, None).unwrap();
+    }
+
+    // TODO:
+    // Add test for serialization
+    // Add test for saving function
+}
