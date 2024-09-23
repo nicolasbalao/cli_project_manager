@@ -1,6 +1,6 @@
 use std::{
     fmt::Debug,
-    fs::{self},
+    fs::{self, File},
     io::Write,
     path::{self, PathBuf},
 };
@@ -27,6 +27,7 @@ enum Commands {
 }
 
 fn main() {
+    setup();
     let cli = Cli::parse();
 
     match &cli.command {
@@ -76,6 +77,11 @@ fn add_command(path: &path::PathBuf, project_name: &Option<String>) {
         None => String::from(path.file_name().unwrap().to_str().unwrap()),
     };
 
+    if project_exist(&project_name, path.to_str().unwrap()) {
+        println!("Project already exist");
+        std::process::exit(0);
+    }
+
     let project_meta_data = MetaData::new(String::from(path.to_str().unwrap()), project_name);
 
     let project_config = ProjectConfig::new(project_meta_data);
@@ -108,6 +114,7 @@ fn add_command(path: &path::PathBuf, project_name: &Option<String>) {
 fn write_project_config(project_config: &ProjectConfig, config_path: &PathBuf) {
     let toml_str = toml::to_string(&project_config).unwrap();
     write_file(toml_str.as_bytes(), config_path);
+    println!("Project file configuration was created: {:#?}", config_path);
 }
 
 fn get_project_index() -> ProjectIndex {
@@ -117,6 +124,10 @@ fn get_project_index() -> ProjectIndex {
             .join(".project_manager_cli/project_index.toml"),
     )
     .expect("Failed to read the project index file");
+
+    if toml_str.is_empty() {
+        return ProjectIndex { projects: vec![] };
+    };
 
     let project_index: ProjectIndex = toml::from_str(&toml_str).expect("Failed to from_str");
 
@@ -130,6 +141,7 @@ fn write_project_index_file(project_index: &ProjectIndex) {
         .join(".project_manager_cli/project_index.toml");
 
     write_file(toml_str.as_bytes(), &project_index_file_path);
+    println!("Project added to the index file")
 }
 
 fn write_file(content: &[u8], path: &PathBuf) {
@@ -142,4 +154,37 @@ fn write_file(content: &[u8], path: &PathBuf) {
     let mut file = fs::File::create(path).unwrap();
 
     file.write_all(content).unwrap();
+}
+
+fn project_exist(name: &str, path: &str) -> bool {
+    let project_index = get_project_index();
+
+    if project_index.projects.is_empty() {
+        false
+    } else {
+        project_index
+            .projects
+            .iter()
+            .any(|project| project.project_name == name || project.path == path)
+    }
+}
+
+fn setup() {
+    // check if directories are present
+    let cli_project_location = dirs::home_dir()
+        .unwrap()
+        .join(".project_manager_cli/projects");
+    if !cli_project_location.exists() {
+        if let Some(parent) = cli_project_location.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+    }
+    // Check if the project_index file is present
+    let project_index_file_location = dirs::home_dir()
+        .unwrap()
+        .join(".project_manager_cli/project_index.toml");
+
+    if !project_index_file_location.exists() {
+        File::create(project_index_file_location).expect("Could not create project index file");
+    }
 }
