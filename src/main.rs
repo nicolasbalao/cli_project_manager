@@ -1,13 +1,13 @@
 use std::{
     fmt::Debug,
-    fs::{self, File},
+    fs::{self},
     io::Write,
-    path::{self, Path, PathBuf},
+    path::{self, PathBuf},
 };
 
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use clap::{command, Parser, Subcommand};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug)]
 #[command(name = "cli", version = "1.0", about = "Project Manager CLI")]
@@ -31,8 +31,6 @@ fn main() {
 
     match &cli.command {
         Commands::Add { path, name } => {
-            println!("Adding project with path: {path:?}");
-
             add_command(path, name);
         }
     }
@@ -49,7 +47,7 @@ impl ProjectConfig {
     }
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 struct MetaData {
     project_name: String,
     creation_date_utc: String,
@@ -66,10 +64,13 @@ impl MetaData {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct ProjectIndex {
+    projects: Vec<MetaData>,
+}
+
 fn add_command(path: &path::PathBuf, project_name: &Option<String>) {
     let path = path.canonicalize().unwrap();
-    println!("Path canonicalized: {path:?}");
-
     let project_name = match project_name {
         Some(name) => name.clone(),
         None => String::from(path.file_name().unwrap().to_str().unwrap()),
@@ -85,8 +86,23 @@ fn add_command(path: &path::PathBuf, project_name: &Option<String>) {
     ));
     write_project_config(&project_config, &project_config_path);
 
+    let project_index_file_path = dirs::home_dir()
+        .unwrap()
+        .join(".project_manager_cli/project_index.toml");
 
+    // TODO:
+    if !project_index_file_path.exists() {
+        // doesn't exist
+        let project_index = ProjectIndex {
+            projects: vec![project_config.meta_data],
+        };
 
+        write_project_index_file(&project_index);
+    } else {
+        let mut project_index = get_project_index();
+        project_index.projects.push(project_config.meta_data);
+        write_project_index_file(&project_index);
+    }
 }
 
 fn write_project_config(project_config: &ProjectConfig, config_path: &PathBuf) {
@@ -94,13 +110,36 @@ fn write_project_config(project_config: &ProjectConfig, config_path: &PathBuf) {
     write_file(toml_str.as_bytes(), config_path);
 }
 
+fn get_project_index() -> ProjectIndex {
+    let toml_str = fs::read_to_string(
+        dirs::home_dir()
+            .unwrap()
+            .join(".project_manager_cli/project_index.toml"),
+    )
+    .expect("Failed to read the project index file");
+
+    let project_index: ProjectIndex = toml::from_str(&toml_str).expect("Failed to from_str");
+
+    project_index
+}
+
+fn write_project_index_file(project_index: &ProjectIndex) {
+    let toml_str = toml::to_string(&project_index).unwrap();
+    let project_index_file_path = dirs::home_dir()
+        .unwrap()
+        .join(".project_manager_cli/project_index.toml");
+
+    write_file(toml_str.as_bytes(), &project_index_file_path);
+}
+
 fn write_file(content: &[u8], path: &PathBuf) {
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).unwrap();
+    if !path.exists() {
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).unwrap();
+        }
     }
 
     let mut file = fs::File::create(path).unwrap();
 
     file.write_all(content).unwrap();
-    println!("Config file created at {:?}", path);
 }
