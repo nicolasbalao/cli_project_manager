@@ -21,15 +21,17 @@ impl ProjectConfig {
     // TODO Add error handling
     pub fn save(&self) -> Result<(), anyhow::Error> {
         let toml_str = toml::to_string(&self).context("Failed to serialize project config")?;
-        let config_file_path = dirs::home_dir()
-            .context("Failed to get home directory")?
-            .join(format!(
-                ".project_manager_cli/projects/{}.toml",
-                self.meta_data.name
-            ));
+        // let config_file_path = dirs::home_dir()
+        //     .context("Failed to get home directory")?
+        //     .join(format!(
+        //         ".project_manager_cli/projects/{}.toml",
+        //         self.meta_data.name
+        //     ));
 
-        let mut config_file =
-            fs::File::create(config_file_path).context("Failed creating  project config file")?;
+        let project_config_file_path = project_config_path(&self.meta_data.name);
+
+        let mut config_file = fs::File::create(project_config_file_path)
+            .context("Failed creating  project config file")?;
 
         config_file
             .write_all(&toml_str.as_bytes())
@@ -42,6 +44,14 @@ impl ProjectConfig {
 
         Ok(())
     }
+}
+
+fn project_config_path(project_name: &str) -> path::PathBuf {
+    let config = crate::config::get_config().unwrap().read().unwrap();
+    config
+        .base_dir
+        .join(format!("projects/{}.toml", project_name))
+        .clone()
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -153,5 +163,23 @@ mod test {
 
         assert!(result.is_ok());
         println!("Test passed: Porject config serialized and mock savec correctly");
+    }
+
+    #[test]
+    fn test_project_config_file_path() {
+        crate::config::init_config().unwrap();
+        let project_name = "test_project";
+        let project_config_path = project_config_path(&project_name);
+
+        let config = crate::config::get_config().unwrap().read().unwrap();
+
+        assert_eq!(
+            config
+                .base_dir
+                .join(format!("projects/{project_name}.toml"))
+                .to_string_lossy()
+                .to_string(),
+            project_config_path.to_string_lossy().to_string()
+        )
     }
 }

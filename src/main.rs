@@ -24,16 +24,16 @@ enum Commands {
 }
 
 fn main() {
-    if let Err(e) = config::setup_environment() {
-        eprintln!("Failed to setup the environment: {:?}", e);
-        return;
-    };
+    if let Err(e) = crate::config::init_config() {
+        eprintln!("Failed to initialize config: {:?}", e);
+        std::process::exit(1);
+    }
 
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Add { path, name } => {
-            crate::commands::add::execute(path, name);
+            crate::commands::add::execute(path,  name);
         }
     }
 }
