@@ -2,8 +2,8 @@ use anyhow::Context;
 use dirs;
 use once_cell::sync::OnceCell;
 use std::fs::File;
-use std::path;
 use std::sync::RwLock;
+use std::{env, path};
 use std::{fs, io, path::PathBuf};
 
 pub struct Config {
@@ -12,9 +12,11 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(base_dir: Option<PathBuf>) -> Result<Self, anyhow::Error> {
-        let base_dir =
-            base_dir.unwrap_or_else(|| dirs::home_dir().unwrap().join(".project_manager_cli"));
+    pub fn new() -> Result<Self, anyhow::Error> {
+        let base_dir = match env::var("PROJECT_MANAGER_CLI_HOME") {
+            Ok(path) => path::PathBuf::from(path),
+            Err(_) => dirs::home_dir().unwrap().join(".project_manager_cli")
+        };
 
         ensure_directory_exists(&base_dir).context("Failed to ensure project directory exists")?;
 
@@ -33,7 +35,7 @@ static CONFIG: OnceCell<RwLock<Config>> = OnceCell::new();
 
 // Function to initialize the global config
 pub fn init_config() -> Result<(), anyhow::Error> {
-    let config = Config::new(None)?;
+    let config = Config::new()?;
     CONFIG
         .set(RwLock::new(config))
         .map_err(|_| anyhow::anyhow!("Config was already initialized"))?;
