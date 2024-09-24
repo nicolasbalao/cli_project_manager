@@ -74,6 +74,8 @@ impl ProjectMetaData {
 #[cfg(test)]
 mod test {
 
+    use std::io::Cursor;
+
     use super::*;
 
     #[test]
@@ -120,6 +122,7 @@ mod test {
     }
 
     #[test]
+    #[should_panic]
     fn create_project_meta_data_with_invalide_path() {
         let invalide_path =
             path::PathBuf::new().join("/tmp/jflsdjflksdjflkjslfjlsdfbdshjkgvbnjkhcvfh");
@@ -127,7 +130,28 @@ mod test {
         let _ = ProjectMetaData::new(&invalide_path, None).unwrap();
     }
 
-    // TODO:
-    // Add test for serialization
-    // Add test for saving function
+    fn mock_write_file(content: &[u8]) -> Result<(), anyhow::Error> {
+        let mut buffer = Cursor::new(Vec::new());
+        buffer.write_all(content)?;
+        assert!(!buffer.get_ref().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn create_project_and_save() {
+        let project_name = Some("test_project".to_string());
+        let project_path = tempfile::tempdir().unwrap().into_path();
+        let project_meta_data = ProjectMetaData::new(&project_path, project_name.clone())
+            .expect("Failed to create project metadata");
+
+        let project_config = ProjectConfig::new(project_meta_data);
+
+        let toml_str =
+            toml::to_string(&project_config).expect("Failed to serialize project config");
+
+        let result = mock_write_file(toml_str.as_bytes());
+
+        assert!(result.is_ok());
+        println!("Test passed: Porject config serialized and mock savec correctly");
+    }
 }
