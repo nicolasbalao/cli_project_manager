@@ -1,22 +1,20 @@
-name: Cargo Build & Test
+name: Rust CI
 
 on:
+  push:
   pull_request:
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  build_and_test:
-    runs-on: ubuntu-lastest
+  build-and-test:
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
         rust: [stable, beta, nightly]
 
-    setps:
+    steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -25,7 +23,7 @@ jobs:
           override: true
           components: clippy, rustfmt
 
-      - name: Cache cargo registry
+      - name: Cache Cargo registry
         uses: actions/cache@v3
         with:
           path: ~/.cargo/registry
@@ -33,22 +31,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
 
-      - name: Cache cargo build
+      - name: Cache Cargo build
         uses: actions/cache@v3
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
-          restore-key: |
+          restore-keys: |
             ${{ runner.os }}-cargo-build-
 
       - name: Build
         run: cargo build --verbose
 
-      - name: Run clippy
+      - name: Run Clippy
         run: cargo clippy -- -D warnings
 
       - name: Run Rustfmt
         run: cargo fmt -- --check
 
-      - name: Run  Tests
+      - name: Run Unit Tests
         run: cargo test -- --test-threads=1
