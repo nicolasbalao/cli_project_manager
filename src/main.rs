@@ -33,7 +33,7 @@ fn main() {
 
     match &cli.command {
         Commands::Add { path, name } => {
-            crate::commands::add::execute(path,  name);
+            crate::commands::add::execute(path, name);
         }
     }
 }
