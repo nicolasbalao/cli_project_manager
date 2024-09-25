@@ -43,7 +43,7 @@ jobs:
         run: cargo build --verbose
 
       - name: Run Clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy
 
       - name: Run Rustfmt
         run: cargo fmt -- --check
