@@ -1,4 +1,4 @@
-use std::path;
+use std::{os::unix::process, path};
 
 use crate::models::{
     project_config::{ProjectConfig, ProjectMetaData},
@@ -10,7 +10,7 @@ pub fn execute(path: &path::PathBuf, project_name: &Option<String>) {
         Ok(meta) => meta,
         Err(e) => {
             eprintln!("Error creating project metadata: {:?}", e);
-            return;
+            std::process::exit(1)
         }
     };
 
@@ -28,10 +28,10 @@ pub fn execute(path: &path::PathBuf, project_name: &Option<String>) {
 
     if let Err(e) = project_config.save() {
         eprintln!("Error saving project config: {:?}", e);
-        return;
+        std::process::exit(1)
     };
     if let Err(e) = project_index.add_project_and_save(project_config.meta_data) {
         eprintln!("Error adding project to index: {:?}", e);
-        return;
+        std::process::exit(1)
     }
 }

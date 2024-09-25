@@ -21,15 +21,12 @@ impl ProjectConfig {
     // TODO Add error handling
     pub fn save(&self) -> Result<(), anyhow::Error> {
         let toml_str = toml::to_string(&self).context("Failed to serialize project config")?;
-        // let config_file_path = dirs::home_dir()
-        //     .context("Failed to get home directory")?
-        //     .join(format!(
-        //         ".project_manager_cli/projects/{}.toml",
-        //         self.meta_data.name
-        //     ));
-
         let project_config_file_path = project_config_path(&self.meta_data.name);
 
+        println!(
+            "Path file: {:?}",
+            project_config_file_path.parent().unwrap().exists()
+        );
         let mut config_file = fs::File::create(project_config_file_path)
             .context("Failed creating  project config file")?;
 

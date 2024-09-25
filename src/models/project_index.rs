@@ -68,14 +68,12 @@ impl ProjectIndex {
         let toml_str = toml::to_string(&self).context("Failed to serialize project index")?;
 
         let config = crate::config::get_config().unwrap().read().unwrap();
-        // let index_file_path = dirs::home_dir()
-        //     .context("Failed to ger home directory")?
-        //     .join(".project_manager_cli/project_index.toml");
 
         fs::create_dir_all(config.project_index_file.parent().unwrap())
             .context("Failed to create directory for project index file")?;
 
-        fs::write(&config.project_index_file, &toml_str).context("Failed to write project index file")?;
+        fs::write(&config.project_index_file, &toml_str)
+            .context("Failed to write project index file")?;
         println!("Project index file saved");
         Ok(())
     }
