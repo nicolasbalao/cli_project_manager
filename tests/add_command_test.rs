@@ -1,9 +1,12 @@
 use core::str;
 use std::{fs, thread, time::Duration};
 
+use serial_test::serial;
+
 /// 1. Test normal behaviour command
 ///    add <path> --name <project-name>
 #[test]
+#[serial]
 fn add_new_project_with_name() -> Result<(), Box<dyn std::error::Error>> {
     let temp_dir = tempfile::tempdir().expect("Failed to create tmp dir");
     let temp_project_dir = tempfile::tempdir().expect("Failed to create tmp dir");
@@ -43,6 +46,7 @@ fn add_new_project_with_name() -> Result<(), Box<dyn std::error::Error>> {
 /// 2. Test without the name
 ///    add <path>
 #[test]
+#[serial]
 fn add_new_project_without_name() -> Result<(), Box<dyn std::error::Error>> {
     let project_name = "project_without_name";
     let temp_dir = tempfile::tempdir().expect("Create temp dir");
@@ -89,6 +93,7 @@ fn add_new_project_without_name() -> Result<(), Box<dyn std::error::Error>> {
 //    add <path>
 
 #[test]
+#[serial]
 fn add_new_project_with_bad_path() -> Result<(), Box<dyn std::error::Error>> {
     let temp_dir = tempfile::tempdir().expect("Create temp dir");
     let temp_project_dir = tempfile::tempdir().unwrap().path().join("some/bad/path");
@@ -122,6 +127,7 @@ fn add_new_project_with_bad_path() -> Result<(), Box<dyn std::error::Error>> {
 //    add <path> --name <existing-name>
 
 #[test]
+#[serial]
 fn create_a_project_with_an_existing_name() -> Result<(), Box<dyn std::error::Error>> {
     let temp_dir = tempfile::tempdir().expect("Create temp dir");
     let temp_project_dir = tempfile::tempdir()
@@ -177,6 +183,7 @@ fn create_a_project_with_an_existing_name() -> Result<(), Box<dyn std::error::Er
 // 5. Test with project with an existing path
 //    add <path>
 #[test]
+#[serial]
 fn create_a_project_with_an_existing_path() -> Result<(), Box<dyn std::error::Error>> {
     let temp_dir = tempfile::tempdir().expect("Create temp dir");
     let temp_project_dir = tempfile::tempdir()
