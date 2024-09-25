@@ -1,11 +1,11 @@
-use std::{os::unix::process, path};
+use std::path::Path;
 
 use crate::models::{
     project_config::{ProjectConfig, ProjectMetaData},
     project_index::ProjectIndex,
 };
 
-pub fn execute(path: &path::PathBuf, project_name: &Option<String>) {
+pub fn execute(path: &Path, project_name: &Option<String>) {
     let project_meta_data = match ProjectMetaData::new(path, project_name.clone()) {
         Ok(meta) => meta,
         Err(e) => {

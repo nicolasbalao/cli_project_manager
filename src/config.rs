@@ -1,5 +1,4 @@
 use anyhow::Context;
-use dirs;
 use once_cell::sync::OnceCell;
 use std::fs::File;
 use std::sync::RwLock;
@@ -9,7 +8,6 @@ use std::{fs, io, path::PathBuf};
 pub struct Config {
     pub base_dir: path::PathBuf,
     pub project_index_file: path::PathBuf,
-    pub project_config_dir: path::PathBuf,
 }
 
 impl Config {
@@ -19,6 +17,7 @@ impl Config {
             Err(_) => dirs::home_dir().unwrap().join(".project_manager_cli"),
         };
 
+        // TODO let implement this in the structure and use it
         let project_config_dir = base_dir.join("projects");
 
         ensure_directory_exists(&base_dir).context("Failed to ensure project directory exists")?;
@@ -32,7 +31,6 @@ impl Config {
         Ok(Config {
             base_dir,
             project_index_file,
-            project_config_dir,
         })
     }
 }

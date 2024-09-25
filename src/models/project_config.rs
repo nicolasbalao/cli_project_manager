@@ -1,7 +1,7 @@
 use std::{
     fs,
     io::Write,
-    path::{self},
+    path::{self, Path},
 };
 
 use anyhow::{Context, Ok};
@@ -31,7 +31,7 @@ impl ProjectConfig {
             .context("Failed creating  project config file")?;
 
         config_file
-            .write_all(&toml_str.as_bytes())
+            .write_all(toml_str.as_bytes())
             .context("Failed to write the config file")?;
 
         println!(
@@ -59,7 +59,7 @@ pub struct ProjectMetaData {
 }
 
 impl ProjectMetaData {
-    pub fn new(path: &path::PathBuf, project_name: Option<String>) -> Result<Self, anyhow::Error> {
+    pub fn new(path: &Path, project_name: Option<String>) -> Result<Self, anyhow::Error> {
         let path = path.canonicalize().context("Failed to canonicalize path")?;
         let canonical_path = path.to_string_lossy().to_string();
         let name = project_name.unwrap_or_else(|| {
