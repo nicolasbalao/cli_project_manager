@@ -21,6 +21,7 @@ enum Commands {
         #[arg(short, long)]
         name: Option<String>,
     },
+    List,
 }
 
 fn main() {
@@ -34,6 +35,9 @@ fn main() {
     match &cli.command {
         Commands::Add { path, name } => {
             crate::commands::add::execute(path, name);
+        }
+        Commands::List => {
+            crate::commands::list::execute();
         }
     }
 }

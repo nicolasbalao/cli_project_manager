@@ -1,5 +1,5 @@
 use std::{
-    fs,
+    fmt, fs,
     path::{self},
 };
 
@@ -75,6 +75,15 @@ impl ProjectIndex {
         fs::write(&config.project_index_file, &toml_str)
             .context("Failed to write project index file")?;
         println!("Project index file saved");
+        Ok(())
+    }
+}
+
+impl fmt::Display for ProjectIndex {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for project in &self.projects {
+            writeln!(f, "{}", project)?;
+        }
         Ok(())
     }
 }
