@@ -6,7 +6,7 @@ pub fn execute() {
     let project_index = ProjectIndex::load_or_new();
 
     if project_index.projects.is_empty() {
-        println!("No projects found");
+        println!("No project found");
         return;
     }
 
