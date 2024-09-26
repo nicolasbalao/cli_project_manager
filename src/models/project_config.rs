@@ -1,10 +1,11 @@
 use std::{
+    fmt::Display,
     fs,
     io::Write,
     path::{self, Path},
 };
 
-use anyhow::{Context, Ok};
+use anyhow::Context;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
@@ -75,6 +76,12 @@ impl ProjectMetaData {
             path: canonical_path,
             creation_date_utc: Utc::now().to_string(),
         })
+    }
+}
+
+impl Display for ProjectMetaData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name)
     }
 }
 
