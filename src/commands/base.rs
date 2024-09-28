@@ -19,12 +19,15 @@ pub fn execute(project_name: String) {
         }
     };
 
-    print!("{}", &project_meta_data.path);
+    let config = crate::config::get_config().unwrap().read().unwrap();
 
+    let editor_command = &config.config.editor_cmd;
     // Open the editor in the directory
-    Command::new("code")
+    Command::new(editor_command)
         .arg("-n")
         .arg(&project_meta_data.path)
         .spawn()
         .expect("Failed to open vscode");
+
+    print!("{}", &project_meta_data.path);
 }
