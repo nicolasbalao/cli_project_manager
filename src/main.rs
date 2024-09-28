@@ -9,8 +9,11 @@ mod models;
 #[derive(Parser, Debug)]
 #[command(name = "cli", version = "1.0", about = "Project Manager CLI")]
 struct Cli {
+    #[arg()]
+    project_name: Option<String>,
+
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -33,11 +36,19 @@ fn main() {
     let cli = Cli::parse();
 
     match &cli.command {
-        Commands::Add { path, name } => {
+        Some(Commands::Add { path, name }) => {
             crate::commands::add::execute(path, name);
         }
-        Commands::List => {
+        Some(Commands::List) => {
             crate::commands::list::execute();
+        }
+        None => {
+            if let Some(project_name) = cli.project_name {
+                crate::commands::base::execute(project_name);
+            } else {
+                eprintln!("No subcommand or project name provided");
+                std::process::exit(1);
+            }
         }
     }
 }
