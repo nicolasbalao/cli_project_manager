@@ -11,4 +11,6 @@ pub fn execute(project_name: &str) {
             std::process::exit(0);
         }
     };
+
+    println!("{project_name} removed !!");
 }
