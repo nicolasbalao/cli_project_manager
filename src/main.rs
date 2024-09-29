@@ -25,6 +25,9 @@ enum Commands {
         name: Option<String>,
     },
     List,
+    Delete {
+        project_name: String,
+    },
 }
 
 fn main() {
@@ -41,6 +44,9 @@ fn main() {
         }
         Some(Commands::List) => {
             crate::commands::list::execute();
+        }
+        Some(Commands::Delete { project_name }) => {
+            crate::commands::delete::execute(project_name);
         }
         None => {
             if let Some(project_name) = cli.project_name {
