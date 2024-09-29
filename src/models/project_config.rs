@@ -42,6 +42,20 @@ impl ProjectConfig {
 
         Ok(())
     }
+
+    pub fn remove(self) -> Result<(), anyhow::Error> {
+        let config = crate::config::get_config().unwrap().read().unwrap();
+        let project_config_path = config
+            .base_dir
+            .join(format!("projects/{}.toml", self.meta_data.name));
+
+        if project_config_path.exists() {
+            fs::remove_file(project_config_path).context("Failed to delete project config file")?;
+            Ok(())
+        } else {
+            Err(anyhow::anyhow!("Project config path doesn't exist"))
+        }
+    }
 }
 
 fn project_config_path(project_name: &str) -> path::PathBuf {
@@ -82,6 +96,14 @@ impl ProjectMetaData {
 impl Display for ProjectMetaData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.name)
+    }
+}
+
+impl PartialEq for ProjectMetaData {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+            && self.creation_date_utc == other.creation_date_utc
+            && self.path == other.path
     }
 }
 

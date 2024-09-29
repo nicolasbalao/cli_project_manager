@@ -1,3 +1,14 @@
+use crate::models::project_index::ProjectIndex;
+
 pub fn execute(project_name: &str) {
-    println!("Deleting project: {project_name}");
+    let mut project_index = ProjectIndex::load_or_new();
+
+    // TODO: Improve this
+    match project_index.remove_project_by_name(project_name) {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("Error while removing project{:?}", e);
+            std::process::exit(0);
+        }
+    };
 }

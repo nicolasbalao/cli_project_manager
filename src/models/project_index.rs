@@ -3,7 +3,7 @@ use std::{
     path::{self},
 };
 
-use super::project_config::ProjectMetaData;
+use super::project_config::{ProjectConfig, ProjectMetaData};
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
@@ -83,6 +83,21 @@ impl ProjectIndex {
             .iter()
             .find(|project| project.name == project_name)
             .context(format!("Project {} not found", project_name))
+    }
+
+    pub fn remove_project_by_name(&mut self, project_name: &str) -> Result<(), anyhow::Error> {
+        let project_index = self
+            .projects
+            .iter()
+            .position(|p| p.name == project_name)
+            .context("Project doesn't exist")?;
+
+        let project_meta_data = self.projects.remove(project_index);
+
+        let project_config = ProjectConfig::new(project_meta_data);
+        project_config.remove()?;
+        self.save()?;
+        Ok(())
     }
 }
 
