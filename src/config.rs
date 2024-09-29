@@ -1,13 +1,20 @@
 use anyhow::Context;
 use once_cell::sync::OnceCell;
+use serde::Deserialize;
 use std::fs::File;
 use std::sync::RwLock;
 use std::{env, path};
 use std::{fs, io, path::PathBuf};
 
+#[derive(Deserialize, Debug)]
+pub struct ConfigFile {
+    #[serde(default = "default_editor_conf")]
+    pub editor_cmd: String,
+}
 pub struct Config {
     pub base_dir: path::PathBuf,
     pub project_index_file: path::PathBuf,
+    pub config: ConfigFile,
 }
 
 impl Config {
@@ -17,7 +24,6 @@ impl Config {
             Err(_) => dirs::home_dir().unwrap().join(".project_manager_cli"),
         };
 
-        // TODO let implement this in the structure and use it
         let project_config_dir = base_dir.join("projects");
 
         ensure_directory_exists(&base_dir).context("Failed to ensure project directory exists")?;
@@ -28,9 +34,20 @@ impl Config {
 
         ensure_file_exists(&project_index_file).context("Failed to create project index file")?;
 
+        let cli_configuration_file = base_dir.join("config.toml");
+
+        ensure_file_exists(&cli_configuration_file)?;
+
+        let toml_str =
+            fs::read_to_string(&cli_configuration_file).context("Failed to read config.toml")?;
+
+        let config_file: ConfigFile =
+            toml::from_str(&toml_str).context("Failed to parse config.toml")?;
+
         Ok(Config {
             base_dir,
             project_index_file,
+            config: config_file,
         })
     }
 }
@@ -66,4 +83,7 @@ fn ensure_file_exists(file: &PathBuf) -> io::Result<()> {
     }
     Ok(())
 }
-// TODO add test
+
+fn default_editor_conf() -> String {
+    String::from("code")
+}

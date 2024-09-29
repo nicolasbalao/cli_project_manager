@@ -77,6 +77,13 @@ impl ProjectIndex {
         println!("Project index file saved");
         Ok(())
     }
+
+    pub fn find_project(&self, project_name: &str) -> Result<&ProjectMetaData, anyhow::Error> {
+        self.projects
+            .iter()
+            .find(|project| project.name == project_name)
+            .context(format!("Project {} not found", project_name))
+    }
 }
 
 impl fmt::Display for ProjectIndex {
