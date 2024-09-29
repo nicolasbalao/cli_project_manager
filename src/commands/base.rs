@@ -28,6 +28,4 @@ pub fn execute(project_name: String) {
         .arg(&project_meta_data.path)
         .spawn()
         .expect("Failed to open vscode");
-
-    print!("{}", &project_meta_data.path);
 }
