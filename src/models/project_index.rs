@@ -3,7 +3,7 @@ use std::{
     path::{self},
 };
 
-use super::project_config::ProjectMetaData;
+use super::project_config::{ProjectConfig, ProjectMetaData};
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
@@ -57,7 +57,6 @@ impl ProjectIndex {
 
         Ok(())
     }
-
     pub fn project_exists(&self, name: &str, path: &str) -> bool {
         self.projects
             .iter()
@@ -78,11 +77,29 @@ impl ProjectIndex {
         Ok(())
     }
 
-    pub fn find_project(&self, project_name: &str) -> Result<&ProjectMetaData, anyhow::Error> {
+    pub fn find_project_by_name(
+        &self,
+        project_name: &str,
+    ) -> Result<&ProjectMetaData, anyhow::Error> {
         self.projects
             .iter()
             .find(|project| project.name == project_name)
             .context(format!("Project {} not found", project_name))
+    }
+
+    pub fn remove_project_by_name(&mut self, project_name: &str) -> Result<(), anyhow::Error> {
+        let project_index = self
+            .projects
+            .iter()
+            .position(|p| p.name == project_name)
+            .context("Project doesn't exist")?;
+
+        let project_meta_data = self.projects.remove(project_index);
+
+        let project_config = ProjectConfig::new(project_meta_data);
+        project_config.remove()?;
+        self.save()?;
+        Ok(())
     }
 }
 
@@ -104,26 +121,13 @@ mod test {
     use super::*;
 
     #[test]
-    fn project_index_creation() {
+    fn test_new() {
         let project_index = ProjectIndex::new();
         assert!(project_index.projects.is_empty());
     }
 
     #[test]
-    fn project_exists() {
-        let project_name = Some("project_test".to_string());
-        let project_path = tempfile::tempdir().unwrap().into_path();
-
-        let project_meta_data = ProjectMetaData::new(&project_path, project_name.clone()).unwrap();
-
-        let mut project_index = ProjectIndex::new();
-        project_index.projects.push(project_meta_data);
-
-        assert!(project_index.project_exists("project_test", project_path.to_str().unwrap()));
-    }
-
-    #[test]
-    fn load_non_existent_file_index() {
+    fn test_load_from_path_non_existent_file_index() {
         let temp_dir = tempfile::tempdir().unwrap();
         let index_file_path = temp_dir.into_path().join("non_existent_index_file.toml");
 
@@ -133,7 +137,7 @@ mod test {
     }
 
     #[test]
-    fn load_existent_file_index() {
+    fn test_load_from_path_existent_file_index() {
         let temp_dir = tempfile::tempdir().unwrap();
         let index_file_path = temp_dir.path().join("project_index.toml");
 
@@ -157,4 +161,42 @@ mod test {
         assert_eq!(index.projects.len(), 1);
         assert_eq!(index.projects[0].name, "TestProject");
     }
+
+    #[test]
+    fn test_project_exists() {
+        let project_name = Some("project_test".to_string());
+        let project_path = tempfile::tempdir().unwrap().into_path();
+
+        let project_meta_data = ProjectMetaData::new(&project_path, project_name.clone()).unwrap();
+
+        let mut project_index = ProjectIndex::new();
+        project_index.projects.push(project_meta_data);
+
+        assert!(project_index.project_exists("project_test", project_path.to_str().unwrap()));
+    }
+
+    // TODO:
+
+    // Save
+
+    // Find project
+    #[test]
+    fn test_find_project_by_name() {
+        let tmp_dir = tempfile::tempdir().expect("Failed to create tmp dir");
+        let project_meta_data =
+            ProjectMetaData::new(tmp_dir.path(), Some("project_name".to_string()))
+                .expect("Failed to create project meta data");
+
+        let mut project_index = ProjectIndex::new();
+
+        project_index.projects.push(project_meta_data);
+
+        let project_meta_data_finded = project_index
+            .find_project_by_name(&project_index.projects[0].name)
+            .unwrap();
+
+        assert_eq!(*project_meta_data_finded, project_index.projects[0]);
+    }
+
+    // Remove project
 }

@@ -11,7 +11,7 @@ pub fn execute(project_name: String) {
     }
 
     // Search project in the project index
-    let project_meta_data = match project_index.find_project(&project_name) {
+    let project_meta_data = match project_index.find_project_by_name(&project_name) {
         Ok(p) => p,
         Err(e) => {
             eprintln!("Error finding project form project index {:?}", e);
