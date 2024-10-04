@@ -28,4 +28,12 @@ pub fn execute(project_name: String) {
         .arg(&project_meta_data.path)
         .spawn()
         .expect("Failed to open vscode");
+
+    let mut shell = Command::new("zsh")
+        .env("PROJECT_NAME", &project_meta_data.name)
+        .current_dir(&project_meta_data.path)
+        .spawn()
+        .expect("Failed to spawn shell");
+
+    shell.wait().expect("Failed to wait shell processus");
 }
