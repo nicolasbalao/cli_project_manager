@@ -19,18 +19,11 @@ pub fn execute(project_name: String) {
         }
     };
 
-    let config = crate::config::get_config().unwrap().read().unwrap();
-
-    let editor_command = &config.config.editor_cmd;
-    // Open the editor in the directory
-    Command::new(editor_command)
-        .arg("-n")
-        .arg(&project_meta_data.path)
-        .spawn()
-        .expect("Failed to open vscode");
-
     let mut shell = Command::new("zsh")
-        .env("PROJECT_NAME", &project_meta_data.name)
+        .env(
+            "PMCLI_WORKSPACE_ENV_FILE_PATH",
+            "/home/nicolas/dev/rust/cli_project_manager/workspace_env_test.sh",
+        )
         .current_dir(&project_meta_data.path)
         .spawn()
         .expect("Failed to spawn shell");
