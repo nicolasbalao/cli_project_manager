@@ -19,13 +19,11 @@ pub fn execute(project_name: String) {
         }
     };
 
-    let config = crate::config::get_config().unwrap().read().unwrap();
-
-    let editor_command = &config.config.editor_cmd;
-    // Open the editor in the directory
-    Command::new(editor_command)
-        .arg("-n")
-        .arg(&project_meta_data.path)
+    let mut shell = Command::new("zsh")
+        .env("PROJECT_NAME", &project_meta_data.name)
+        .current_dir(&project_meta_data.path)
         .spawn()
-        .expect("Failed to open vscode");
+        .expect("Failed to spawn shell");
+
+    shell.wait().expect("Failed to wait shell processus");
 }
