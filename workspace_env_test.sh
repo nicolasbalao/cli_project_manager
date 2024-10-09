@@ -1,3 +1,0 @@
-export PROJECT_NAME="CLI PROJECT MANAGER"
-
-alias project="echo $PROJECT_NAME"

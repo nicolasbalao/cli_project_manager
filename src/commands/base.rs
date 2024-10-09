@@ -20,10 +20,7 @@ pub fn execute(project_name: String) {
     };
 
     let mut shell = Command::new("zsh")
-        .env(
-            "PMCLI_WORKSPACE_ENV_FILE_PATH",
-            "/home/nicolas/dev/rust/cli_project_manager/workspace_env_test.sh",
-        )
+        .env("PROJECT_NAME", &project_meta_data.name)
         .current_dir(&project_meta_data.path)
         .spawn()
         .expect("Failed to spawn shell");
