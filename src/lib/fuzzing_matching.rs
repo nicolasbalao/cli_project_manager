@@ -6,8 +6,8 @@ pub fn levenshtein_distance(a: &str, b: &str) -> usize {
 
     let mut distances: Vec<Vec<usize>> = vec![vec![0; length_b + 1]; length_a + 1];
 
-    for i in 0..=length_a {
-        distances[i][0] = i;
+    for (i, distance) in distances.iter_mut().enumerate().take(length_a + 1) {
+        distance[0] = i;
     }
 
     for j in 0..=length_b {
@@ -26,15 +26,13 @@ pub fn levenshtein_distance(a: &str, b: &str) -> usize {
                 distances[i][j - 1] + 1,
                 min(distances[i - 1][j] + 1, distances[i - 1][j - 1] + cost),
             );
-
-            display_levenshtein_distance(a, b, &distances);
         }
     }
 
     distances[length_a][length_b]
 }
 
-fn display_levenshtein_distance(a: &str, b: &str, distances: &Vec<Vec<usize>>) {
+fn display_levenshtein_distance(a: &str, b: &str, distances: &[Vec<usize>]) {
     let a = format!("X{a}");
     let b = format!("X{b}");
 
