@@ -1,4 +1,6 @@
-use std::cmp::min;
+use std::cmp::{max, min};
+
+use crate::lib::utils;
 
 pub fn levenshtein_distance(a: &str, b: &str) -> usize {
     let length_a = a.len();
@@ -30,6 +32,30 @@ pub fn levenshtein_distance(a: &str, b: &str) -> usize {
     }
 
     distances[length_a][length_b]
+}
+
+pub fn compute_matching_score(s1: &str, s2: &str) -> f64 {
+    let s1 = utils::normalize_string(s1);
+
+    let distance = levenshtein_distance(&s1, s2);
+
+    let (len1, len2) = (s1.len(), s2.len());
+
+    let mut score = 1.0 - (distance as f64 / max(len1, len2) as f64);
+
+    if s1.starts_with(s2) {
+        score += 0.3;
+    }
+
+    if distance <= 2 {
+        score += 0.1
+    }
+
+    if s1.contains(&s2) {
+        score += 0.1
+    }
+
+    score.clamp(0.0, 1.0)
 }
 
 fn display_levenshtein_distance(a: &str, b: &str, distances: &[Vec<usize>]) {
