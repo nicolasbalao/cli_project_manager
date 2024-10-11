@@ -77,28 +77,6 @@ pub fn matching(source: Vec<&str>, pattern: &str) -> HashMap<u32, Vec<String>> {
     result
 }
 
-fn display_levenshtein_distance(a: &str, b: &str, distances: &[Vec<usize>]) {
-    let a = format!("X{a}");
-    let b = format!("X{b}");
-
-    print!("  ");
-
-    for letter in b.chars() {
-        print!("{} ", letter);
-    }
-    println!();
-
-    for i in 1..=a.len() {
-        print!("{} ", a.chars().nth(i - 1).unwrap());
-        for j in 1..=b.len() {
-            print!("{:?} ", distances[i - 1][j - 1]);
-        }
-        println!();
-    }
-
-    println!();
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

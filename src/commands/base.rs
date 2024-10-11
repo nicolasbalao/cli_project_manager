@@ -1,9 +1,8 @@
 use std::{io::stdin, process::Command};
 
-use crate::{
-    lib,
-    models::{project_config::ProjectMetaData, project_index::ProjectIndex},
-};
+use cli_project_manager::lib;
+
+use crate::models::project_index::ProjectIndex;
 
 pub fn execute(project_name: String) {
     let project_index = ProjectIndex::load_or_new();
