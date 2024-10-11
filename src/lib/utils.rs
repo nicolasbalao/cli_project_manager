@@ -63,17 +63,4 @@ mod test {
 
         assert_eq!(sort_hashmap_by_keys(&sample), exepected);
     }
-    #[test]
-    fn test_sort_hashmap_by_keys_asc() {
-        let mut sample = HashMap::new();
-
-        sample.insert(10, "test");
-        sample.insert(64, "test");
-        sample.insert(123, "test");
-        sample.insert(12, "test");
-
-        let exepected = vec![(10, &"test"), (12, &"test"), (64, &"test"), (123, &"test")];
-
-        assert_eq!(sort_hashmap_by_keys(&sample), exepected);
-    }
 }
