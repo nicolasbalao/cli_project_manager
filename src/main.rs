@@ -5,6 +5,8 @@ use clap::{command, Parser, Subcommand};
 mod commands;
 mod config;
 mod models;
+// Dev mod
+mod lib;
 
 #[derive(Parser, Debug)]
 #[command(name = "cli", version = "1.0", about = "Project Manager CLI")]
