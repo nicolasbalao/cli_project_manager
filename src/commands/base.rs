@@ -1,6 +1,9 @@
-use std::process::Command;
+use std::{io::stdin, process::Command};
 
-use crate::models::project_index::ProjectIndex;
+use crate::{
+    lib,
+    models::{project_config::ProjectMetaData, project_index::ProjectIndex},
+};
 
 pub fn execute(project_name: String) {
     let project_index = ProjectIndex::load_or_new();
@@ -11,13 +14,46 @@ pub fn execute(project_name: String) {
     }
 
     // Search project in the project index
-    let project_meta_data = match project_index.find_project_by_name(&project_name) {
-        Ok(p) => p,
-        Err(e) => {
-            eprintln!("Error finding project form project index {:?}", e);
-            std::process::exit(1)
-        }
-    };
+    // let project_meta_data = match project_index.find_project_by_name(&project_name) {
+    //     Ok(p) => p,
+    //     Err(e) => {
+    //         eprintln!("Error finding project form project index {:?}", e);
+    //         std::process::exit(1)
+    //     }
+    // };
+
+    let project_names = project_index
+        .projects
+        .iter()
+        .map(|p| p.name.as_str())
+        .collect();
+
+    let project_names_fuzzed = lib::fuzzing_matching::matching(project_names, &project_name);
+    let project_names_fuzzed = lib::utils::sort_hashmap_by_keys(&project_names_fuzzed);
+
+    // REFACTOR
+    let project_meta_data =
+        if project_names_fuzzed[0].0 > 60 && project_names_fuzzed[0].1.len() == 1 {
+            project_index
+                .find_project_by_name(project_names_fuzzed[0].1[0].as_str())
+                .unwrap()
+        } else {
+            let mut index = String::new();
+            let stdin = stdin();
+            for (i, (_, project_name)) in project_names_fuzzed.iter().enumerate() {
+                println!("{} : {}", i, project_name[0]);
+            }
+            stdin.read_line(&mut index).expect("Failed to read stdin");
+
+            let index = index.trim();
+            let index = index.parse().unwrap();
+
+            let (_, project_names) = project_names_fuzzed.iter().nth(index).unwrap();
+
+            project_index
+                .find_project_by_name(&project_names[0])
+                .expect("Failed to find project metadata")
+        };
 
     let mut shell = Command::new("zsh")
         .env("PROJECT_NAME", &project_meta_data.name)
