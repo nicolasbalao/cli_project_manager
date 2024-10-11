@@ -1,3 +1,5 @@
+use std::{collections::HashMap, hash::Hash};
+
 use regex::Regex;
 
 pub fn normalize_string(input: &str) -> String {
@@ -5,9 +7,23 @@ pub fn normalize_string(input: &str) -> String {
     re.replace_all(input, "").to_string()
 }
 
+pub fn sort_hashmap_by_keys<K, V>(map: &HashMap<K, V>) -> Vec<(K, &V)>
+where
+    K: Eq + Hash + Ord + Copy, // K must implement Eq, Hash, and Ord traits
+{
+    // Convert the HashMap into a vector of tuples (key, value)
+    let mut sorted: Vec<(K, &V)> = map.iter().map(|(k, v)| (*k, v)).collect();
+
+    sorted.sort_by(|a, b| b.0.cmp(&a.0));
+
+    sorted
+}
+
 #[cfg(test)]
 mod test {
-    use crate::lib::utils::normalize_string;
+    use std::collections::HashMap;
+
+    use crate::lib::utils::{normalize_string, sort_hashmap_by_keys};
 
     #[test]
     fn test_normalize_string() {
@@ -32,5 +48,32 @@ mod test {
                 expected
             );
         }
+    }
+
+    #[test]
+    fn test_sort_hashmap_by_keys_desc() {
+        let mut sample = HashMap::new();
+
+        sample.insert(10, "test");
+        sample.insert(64, "test");
+        sample.insert(123, "test");
+        sample.insert(12, "test");
+
+        let exepected = vec![(123, &"test"), (64, &"test"), (12, &"test"), (10, &"test")];
+
+        assert_eq!(sort_hashmap_by_keys(&sample), exepected);
+    }
+    #[test]
+    fn test_sort_hashmap_by_keys_asc() {
+        let mut sample = HashMap::new();
+
+        sample.insert(10, "test");
+        sample.insert(64, "test");
+        sample.insert(123, "test");
+        sample.insert(12, "test");
+
+        let exepected = vec![(10, &"test"), (12, &"test"), (64, &"test"), (123, &"test")];
+
+        assert_eq!(sort_hashmap_by_keys(&sample), exepected);
     }
 }

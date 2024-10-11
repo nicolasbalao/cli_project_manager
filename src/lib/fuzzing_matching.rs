@@ -1,8 +1,11 @@
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    collections::HashMap,
+};
 
 use crate::lib::utils;
 
-pub fn levenshtein_distance(a: &str, b: &str) -> usize {
+fn levenshtein_distance(a: &str, b: &str) -> usize {
     let length_a = a.len();
     let length_b = b.len();
 
@@ -51,11 +54,27 @@ pub fn compute_matching_score(s1: &str, s2: &str) -> f64 {
         score += 0.1
     }
 
-    if s1.contains(&s2) {
+    if s1.contains(s2) {
         score += 0.1
     }
 
     score.clamp(0.0, 1.0)
+}
+
+pub fn matching(source: Vec<&str>, pattern: &str) -> HashMap<u32, Vec<String>> {
+    let mut result = HashMap::new();
+    for sample in source {
+        let score = compute_matching_score(sample, pattern);
+
+        // TODO: Refactor this
+        let score = (score * 100.00).round() as u32;
+
+        result
+            .entry(score)
+            .or_insert_with(Vec::new)
+            .push(sample.to_string());
+    }
+    result
 }
 
 fn display_levenshtein_distance(a: &str, b: &str, distances: &[Vec<usize>]) {
