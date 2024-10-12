@@ -50,15 +50,8 @@ fn find_or_fuzzing_match_project<'a>(
     // This ensures that elements in the array are close in score, preventing the user from having
     // to choose between unrelated or vastly different options.
 
-    let mut filtered_matches = vec![sorted_matches[0]];
-    sorted_matches.remove(0);
-    let tmp: Vec<(u32, &Vec<String>)> = sorted_matches
-        .windows(2)
-        .filter(|window| window[0].0 - window[1].0 >= 20)
-        .map(|win| win[0])
-        .collect();
-
-    filtered_matches.extend(tmp);
+    let filtered_matches = filter_by_score_gap(&mut sorted_matches, 20);
+    println!("Filtered matches: {:?}", filtered_matches);
 
     if filtered_matches.len() == 1 {
         let matched_name = &filtered_matches[0].1[0];
@@ -81,6 +74,26 @@ fn find_or_fuzzing_match_project<'a>(
         .expect("Failed to find project");
 
     project_meta_data
+}
+
+fn filter_by_score_gap<'a>(
+    sorted_matches: &mut [(u32, &'a Vec<String>)],
+    gap: u32,
+) -> Vec<(u32, &'a Vec<String>)> {
+    let mut filtered_matches = vec![sorted_matches[0]];
+
+    if sorted_matches[0].0 - sorted_matches[1].0 > gap {
+        return filtered_matches;
+    }
+
+    let tmp: Vec<(u32, &Vec<String>)> = sorted_matches
+        .windows(2)
+        .filter(|window| window[0].0 - window[1].0 <= gap)
+        .map(|win| win[1])
+        .collect();
+
+    filtered_matches.extend(tmp);
+    filtered_matches
 }
 
 fn prompt_user_for_project_selection(sorted_matches: &[(u32, &Vec<String>)]) -> String {
@@ -115,4 +128,43 @@ fn spawn_editor(project_meta_data: &ProjectMetaData) {
         .current_dir(&project_meta_data.path)
         .spawn()
         .expect("Failed to spawn code");
+}
+
+#[cfg(test)]
+mod test {
+
+    use std::vec;
+
+    use super::*;
+    #[test]
+    fn test_filter_by_score_gap() {
+        let a = vec!["a".to_string()];
+        let b = vec!["b".to_string()];
+        let c = vec!["c".to_string()];
+        let d = vec!["d".to_string()];
+        let all_pass_match: Vec<(u32, &Vec<String>)> =
+            vec![(100, &a), (90, &b), (80, &c), (70, &d)];
+        let all_pass_expected = vec![(100, &a), (90, &b), (80, &c), (70, &d)];
+
+        let only_first: Vec<(u32, &Vec<String>)> = vec![(100, &a), (50, &b), (30, &c), (20, &d)];
+        let only_first_expected = vec![(100, &a)];
+
+        let first_three: Vec<(u32, &Vec<String>)> = vec![(100, &a), (90, &b), (80, &c), (10, &d)];
+        let first_three_expected = vec![(100, &a), (90, &b), (80, &c)];
+
+        let samples = vec![
+            (all_pass_match, all_pass_expected),
+            (only_first, only_first_expected),
+            (first_three, first_three_expected),
+        ];
+
+        for (mut input, expected) in samples {
+            let result = filter_by_score_gap(&mut input, 20);
+            assert_eq!(
+                result, expected,
+                "Failed on input: {:?} -> {:?}",
+                input, expected
+            );
+        }
+    }
 }
