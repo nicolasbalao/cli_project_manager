@@ -51,7 +51,6 @@ fn find_or_fuzzing_match_project<'a>(
     // to choose between unrelated or vastly different options.
 
     let filtered_matches = filter_by_score_gap(&mut sorted_matches, 20);
-    println!("Filtered matches: {:?}", filtered_matches);
 
     if filtered_matches.len() == 1 {
         let matched_name = &filtered_matches[0].1[0];
