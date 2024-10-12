@@ -46,9 +46,18 @@ fn find_or_fuzzing_match_project<'a>(
     let fuzzed_matches = lib::fuzzing_matching::matching(project_names, project_name);
     let sorted_matches = lib::utils::sort_hashmap_by_keys(&fuzzed_matches);
 
-    // 3. Handle if fuzzy match score is good enough and only one match is found
-    if sorted_matches[0].0 > 60 && sorted_matches[0].1.len() == 1 {
-        let matched_name = &sorted_matches[0].1[0];
+    // The goal is to create an array that contains elements with a score difference of 20 or less.
+    // This ensures that elements in the array are close in score, preventing the user from having
+    // to choose between unrelated or vastly different options.
+
+    let filtered_matches: Vec<(u32, &Vec<String>)> = sorted_matches
+        .windows(2)
+        .filter(|window| window[0].0 - window[1].0 >= 20)
+        .map(|win| win[0])
+        .collect();
+
+    if filtered_matches.len() == 1 {
+        let matched_name = &filtered_matches[0].1[0];
         return project_index
             .find_project_by_name(matched_name)
             .unwrap_or_else(|e| {
@@ -61,7 +70,7 @@ fn find_or_fuzzing_match_project<'a>(
     }
 
     // 4. Handle mutliple fuzzy matches or low confidence matches by prompting the user
-    let project_name = prompt_user_for_project_selection(&sorted_matches);
+    let project_name = prompt_user_for_project_selection(&filtered_matches);
 
     let project_meta_data = project_index
         .find_project_by_name(&project_name)
