@@ -2,7 +2,7 @@ use std::{io::stdin, process::Command};
 
 use cli_project_manager::lib;
 
-use crate::models::project_index::ProjectIndex;
+use crate::models::{project_config::ProjectMetaData, project_index::ProjectIndex};
 
 pub fn execute(project_name: String) {
     let project_index = ProjectIndex::load_or_new();
@@ -45,14 +45,16 @@ pub fn execute(project_name: String) {
             stdin.read_line(&mut index).expect("Failed to read stdin");
 
             let index = index.trim();
-            let index = index.parse().unwrap();
+            let index: usize = index.parse().unwrap();
 
-            let (_, project_names) = project_names_fuzzed.iter().nth(index).unwrap();
-
+            let (_, project_names) = project_names_fuzzed.get(index).unwrap();
             project_index
                 .find_project_by_name(&project_names[0])
                 .expect("Failed to find project metadata")
         };
+
+    // Lunch vscode with code .
+    spawn_editor(project_meta_data);
 
     let mut shell = Command::new("zsh")
         .env("PROJECT_NAME", &project_meta_data.name)
@@ -61,4 +63,13 @@ pub fn execute(project_name: String) {
         .expect("Failed to spawn shell");
 
     shell.wait().expect("Failed to wait shell processus");
+}
+
+fn spawn_editor(project_meta_data: &ProjectMetaData) {
+    let _ = Command::new("code")
+        .env("PROJECT_NAME", &project_meta_data.name)
+        .arg(".")
+        .current_dir(&project_meta_data.path)
+        .spawn()
+        .expect("Failed to spawn code");
 }
