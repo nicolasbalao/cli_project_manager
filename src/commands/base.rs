@@ -12,46 +12,7 @@ pub fn execute(project_name: String) {
         return;
     }
 
-    // Search project in the project index
-    // let project_meta_data = match project_index.find_project_by_name(&project_name) {
-    //     Ok(p) => p,
-    //     Err(e) => {
-    //         eprintln!("Error finding project form project index {:?}", e);
-    //         std::process::exit(1)
-    //     }
-    // };
-
-    let project_names = project_index
-        .projects
-        .iter()
-        .map(|p| p.name.as_str())
-        .collect();
-
-    let project_names_fuzzed = lib::fuzzing_matching::matching(project_names, &project_name);
-    let project_names_fuzzed = lib::utils::sort_hashmap_by_keys(&project_names_fuzzed);
-
-    // REFACTOR
-    let project_meta_data =
-        if project_names_fuzzed[0].0 > 60 && project_names_fuzzed[0].1.len() == 1 {
-            project_index
-                .find_project_by_name(project_names_fuzzed[0].1[0].as_str())
-                .unwrap()
-        } else {
-            let mut index = String::new();
-            let stdin = stdin();
-            for (i, (_, project_name)) in project_names_fuzzed.iter().enumerate() {
-                println!("{} : {}", i, project_name[0]);
-            }
-            stdin.read_line(&mut index).expect("Failed to read stdin");
-
-            let index = index.trim();
-            let index: usize = index.parse().unwrap();
-
-            let (_, project_names) = project_names_fuzzed.get(index).unwrap();
-            project_index
-                .find_project_by_name(&project_names[0])
-                .expect("Failed to find project metadata")
-        };
+    let project_meta_data = find_or_fuzzing_match_project(&project_index, &project_name);
 
     // Lunch vscode with code .
     spawn_editor(project_meta_data);
@@ -63,6 +24,75 @@ pub fn execute(project_name: String) {
         .expect("Failed to spawn shell");
 
     shell.wait().expect("Failed to wait shell processus");
+}
+
+fn find_or_fuzzing_match_project<'a>(
+    project_index: &'a ProjectIndex,
+    project_name: &'a str,
+) -> &'a ProjectMetaData {
+    // 1. Check for an exact match first
+    if let Ok(project_meta_data) = project_index.find_project_by_name(project_name) {
+        return project_meta_data;
+    }
+
+    // 2. Perform fuzzy matching if no exact match is found
+
+    let project_names: Vec<&str> = project_index
+        .projects
+        .iter()
+        .map(|p| p.name.as_str())
+        .collect();
+
+    let fuzzed_matches = lib::fuzzing_matching::matching(project_names, project_name);
+    let sorted_matches = lib::utils::sort_hashmap_by_keys(&fuzzed_matches);
+
+    // 3. Handle if fuzzy match score is good enough and only one match is found
+    if sorted_matches[0].0 > 60 && sorted_matches[0].1.len() == 1 {
+        let matched_name = &sorted_matches[0].1[0];
+        return project_index
+            .find_project_by_name(matched_name)
+            .unwrap_or_else(|e| {
+                eprintln!(
+                    "Error finding project by name after fuzzing matching: {:?}",
+                    e
+                );
+                std::process::exit(1);
+            });
+    }
+
+    // 4. Handle mutliple fuzzy matches or low confidence matches by prompting the user
+    let project_name = prompt_user_for_project_selection(&sorted_matches);
+
+    let project_meta_data = project_index
+        .find_project_by_name(&project_name)
+        .expect("Failed to find project");
+
+    project_meta_data
+}
+
+fn prompt_user_for_project_selection(sorted_matches: &[(u32, &Vec<String>)]) -> String {
+    println!("Multiple projects matched. Please select one:");
+
+    // Display the list of projects to the user
+    for (i, (_, project_names)) in sorted_matches.iter().enumerate() {
+        println!("{}: {}", i, project_names[0]);
+    }
+
+    // Read user input and parse the selected index
+    let mut index_input = String::new();
+    let stdin = stdin();
+    stdin
+        .read_line(&mut index_input)
+        .expect("Failed to read input");
+    let index: usize = index_input
+        .trim()
+        .parse()
+        .expect("Invalid input. Please enter a number.");
+
+    // Get the selected project name and return its metadata
+    let selected_project_name = &sorted_matches[index].1[0];
+
+    String::from(selected_project_name)
 }
 
 fn spawn_editor(project_meta_data: &ProjectMetaData) {
