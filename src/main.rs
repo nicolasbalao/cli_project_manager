@@ -55,7 +55,7 @@ fn main() {
         }
         Some(Commands::Run { cmd }) => {
             if let Some(project_name) = cli.project_name {
-                println!("Run {cmd} for {project_name}");
+                crate::commands::run::execute(project_name, cmd);
             } else {
                 eprintln!("No project name found");
                 std::process::exit(1);
