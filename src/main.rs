@@ -29,6 +29,10 @@ enum Commands {
     Delete {
         project_name: String,
     },
+    Run {
+        #[arg()]
+        cmd: String,
+    },
 }
 
 fn main() {
@@ -48,6 +52,14 @@ fn main() {
         }
         Some(Commands::Delete { project_name }) => {
             crate::commands::delete::execute(project_name);
+        }
+        Some(Commands::Run { cmd }) => {
+            if let Some(project_name) = cli.project_name {
+                println!("Run {cmd} for {project_name}");
+            } else {
+                eprintln!("No project name found");
+                std::process::exit(1);
+            }
         }
         None => {
             if let Some(project_name) = cli.project_name {
