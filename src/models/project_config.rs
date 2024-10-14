@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fmt::Display,
     fs,
     io::Write,
@@ -9,14 +10,18 @@ use anyhow::Context;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectConfig {
     pub meta_data: ProjectMetaData,
+    pub commands: HashMap<String, String>,
 }
 
 impl ProjectConfig {
     pub fn new(meta_data: ProjectMetaData) -> Self {
-        ProjectConfig { meta_data }
+        ProjectConfig {
+            meta_data,
+            commands: HashMap::new(),
+        }
     }
 
     // TODO Add error handling
@@ -55,6 +60,13 @@ impl ProjectConfig {
         } else {
             Err(anyhow::anyhow!("Project config path doesn't exist"))
         }
+    }
+
+    pub fn load(name: &str) -> ProjectConfig {
+        let path = project_config_path(name);
+        let toml_config = fs::read_to_string(path).expect("Failed to read the config file");
+        let project_config: ProjectConfig = toml::from_str(&toml_config).expect("Failed to parse");
+        project_config
     }
 }
 

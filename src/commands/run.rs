@@ -1,4 +1,4 @@
-use crate::models::project_index::ProjectIndex;
+use crate::models::{project_config::ProjectConfig, project_index::ProjectIndex};
 
 pub fn execute(project_name: String, cmd: &String) {
     let project_index = ProjectIndex::load_or_new();
@@ -11,5 +11,7 @@ pub fn execute(project_name: String, cmd: &String) {
         }
     };
 
-    println!("Project meta data: {:?}", project_meta_data);
+    let project_config = ProjectConfig::load(&project_meta_data.name);
+
+    println!("Project config: {:?}", project_config.commands);
 }
